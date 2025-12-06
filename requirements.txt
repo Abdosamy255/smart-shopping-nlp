@@ -1,0 +1,13 @@
+streamlit>=1.20.0
+pandas>=1.3.0
+numpy>=1.21.0
+scikit-learn>=1.0.0
+
+# Add other project dependencies here (NLTK, regex libs, or transformers) if used
+# e.g.:
+# nltk>=3.6.0
+# transformers>=4.0.0
+streamlit
+pandas
+numpy
+python-dateutil

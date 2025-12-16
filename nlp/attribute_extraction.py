@@ -89,3 +89,52 @@ def extract_attributes(tokens, lang: str = "ar"):
         "brand": brand,
         "features": features
     }
+import re
+
+BRANDS = {
+    "samsung": ["samsung", "سامسونج", "galaxy"],
+    "apple": ["apple", "iphone", "ايفون"],
+    "xiaomi": ["xiaomi", "redmi", "poco", "شاومي"],
+}
+
+def extract_brand(text):
+    text = text.lower()
+    for brand, keywords in BRANDS.items():
+        for kw in keywords:
+            if kw in text:
+                return brand
+    return None
+
+
+FEATURE_PATTERNS = {
+    "ram": r"(\d+)\s*(gb)\s*(ram|رام)",
+    "storage": r"(\d+)\s*(gb|جيجا)",
+    "network": r"(5g|4g|lte)",
+    "display": r"(amoled|oled|ips|lcd)",
+}
+
+def extract_features(text):
+    features = {}
+    text = text.lower()
+    for key, pattern in FEATURE_PATTERNS.items():
+        match = re.search(pattern, text)
+        if match:
+            features[key] = match.group(0)
+    return features
+
+
+def extract_price_range(text):
+    text = text.lower()
+    result = {"min": None, "max": None}
+
+    if m := re.search(r"(تحت|under)\s*(\d+)", text):
+        result["max"] = int(m.group(2))
+
+    if m := re.search(r"(فوق|above)\s*(\d+)", text):
+        result["min"] = int(m.group(2))
+
+    if m := re.search(r"(من|between)\s*(\d+).*(لـ|to|and)\s*(\d+)", text):
+        result["min"] = int(m.group(2))
+        result["max"] = int(m.group(4))
+
+    return result

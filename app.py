@@ -10,6 +10,7 @@ from crawlir import crawl_amazon_to_csv  # 👈 ضيف دي
 from nlp.preprocessing import preprocess_text
 from nlp.attribute_extraction import extract_attributes
 from live_search import live_search,clean_price_amazon
+from search.search_engine import search_products
 
 #عشان تظبط شكل السعر
 def clean_price(x):
@@ -57,8 +58,9 @@ if "history" not in st.session_state:
 
 def run_search(user_input: str):
     """NLP فقط: يرجّع tokens + attrs ونسيب حتة البحث للـ live search."""
-    tokens, lang = preprocess_text(user_input)
+    tokens, lang, intents = preprocess_text(user_input)
     attrs = extract_attributes(tokens, lang)
+    attrs["intents"] = intents
     return tokens, attrs
 
 
@@ -234,8 +236,9 @@ if search_clicked:
         with st.spinner("جاري تحليل النص والبحث عن أفضل المنتجات..."):
 
             # 1) NLP: Preprocessing + Attributes (عشان نعرضهم للدكتور)
-            tokens, lang = preprocess_text(user_input)
+            tokens, lang, intents = preprocess_text(user_input)
             attrs = extract_attributes(tokens, lang)
+            attrs["intents"] = intents
 
             # 2) نبني الـ Query من الـ tokens بعد الـ preprocessing
             query = " ".join(tokens).strip()
@@ -284,17 +287,15 @@ if search_clicked:
                     "product_link": "link",
                 }
             )
-
-            # 8) تطبيق الفلاتر والـ Sorting من الـ Sidebar
-            final_results = apply_ui_filters(
-                results,             # 👈 هنا كانت المشكلة، لازم results مش df_amazon
-                sort_by=sort_by,
-                sort_dir=sort_dir,
-                max_price=max_price_val,
-                brand_filter=brand_filter,
+            # 8️) Search + Ranking using NLP attributes
+            final_results = search_products(
+                results,
+                attrs,
+                top_n=50
             )
 
             time.sleep(0.3)
+
 
         # 9) حفظ في الـ history
         st.session_state.history.insert(
